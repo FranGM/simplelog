@@ -3,6 +3,7 @@ package simplelog
 
 import (
 	"errors"
+	"io"
 	"log"
 	"os"
 )
@@ -17,18 +18,19 @@ const (
 
 // LogLevel represents a logger object for a given log level.
 type LogLevel struct {
-	logger *log.Logger
-	prefix string
-	level  int
+	logger      *log.Logger
+	prefix      string
+	level       int
+	destination io.Writer
 }
 
 // Logger objects that will be used to perform the actual logging.
 // Each of them represents a different logging level and can be pointed to a different backend (file, stdout, etc...)
 var (
-	Error   = &LogLevel{prefix: "ERROR: ", level: LevelError}
-	Warning = &LogLevel{prefix: "WARNING: ", level: LevelWarning}
-	Info    = &LogLevel{prefix: "INFO: ", level: LevelInfo}
-	Debug   = &LogLevel{prefix: "DEBUG: ", level: LevelDebug}
+	Error   = &LogLevel{prefix: "ERROR: ", level: LevelError, destination: os.Stderr}
+	Warning = &LogLevel{prefix: "WARNING: ", level: LevelWarning, destination: os.Stderr}
+	Info    = &LogLevel{prefix: "INFO: ", level: LevelInfo, destination: os.Stdout}
+	Debug   = &LogLevel{prefix: "DEBUG: ", level: LevelDebug, destination: os.Stdout}
 )
 var logThreshold = LevelError
 
@@ -40,8 +42,7 @@ var (
 func init() {
 	var levels = []*LogLevel{Error, Warning, Info, Debug}
 	for _, level := range levels {
-		// TODO: Allow for different handles than stdout
-		level.logger = log.New(os.Stdout, level.prefix, log.LstdFlags)
+		level.logger = log.New(level.destination, level.prefix, log.LstdFlags)
 	}
 }
 
