@@ -1,0 +1,4 @@
+simplelog
+=========
+
+Simple logging library
