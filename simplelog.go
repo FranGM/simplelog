@@ -41,7 +41,7 @@ func init() {
 	var levels = []*LogLevel{Error, Warning, Info, Debug}
 	for _, level := range levels {
 		// TODO: Allow for different handles than stdout
-		level.logger = log.New(os.Stdout, level.prefix, log.Ldate)
+		level.logger = log.New(os.Stdout, level.prefix, log.LstdFlags)
 	}
 }
 
