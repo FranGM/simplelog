@@ -14,6 +14,7 @@ const (
 	LevelInfo               // Threshold for Info log level
 	LevelWarning            // Threshold for Warning log level
 	LevelError              // Threshold for Error log level
+	LevelFatal              // Threshold for Fatal log level (will crash the program when used)
 )
 
 // LogLevel represents a logger object for a given log level.
@@ -27,6 +28,7 @@ type LogLevel struct {
 // Logger objects that will be used to perform the actual logging.
 // Each of them represents a different logging level and can be pointed to a different backend (file, stdout, etc...)
 var (
+	Fatal   = &LogLevel{prefix: "FATAL: ", level: LevelFatal, destination: os.Stderr}
 	Error   = &LogLevel{prefix: "ERROR: ", level: LevelError, destination: os.Stderr}
 	Warning = &LogLevel{prefix: "WARNING: ", level: LevelWarning, destination: os.Stderr}
 	Info    = &LogLevel{prefix: "INFO: ", level: LevelInfo, destination: os.Stdout}
@@ -36,11 +38,11 @@ var logThreshold = LevelError
 
 // Common errors that can be returned
 var (
-	ErrInvalidThreshold = errors.New("Invalid Threshold. Need one between LOG_DEBUG and LOG_ERROR") //
+	ErrInvalidThreshold = errors.New("Invalid Threshold. Need one between LevelDebug and LevelFatal") // When an invalid threshold has been defined
 )
 
 func init() {
-	var levels = []*LogLevel{Error, Warning, Info, Debug}
+	var levels = []*LogLevel{Fatal, Error, Warning, Info, Debug}
 	for _, level := range levels {
 		level.logger = log.New(level.destination, level.prefix, log.LstdFlags)
 	}
@@ -49,7 +51,7 @@ func init() {
 // SetThreshold sets the logging threshold level.
 // Will return InvalidThreshold if new threshold isn't in the accepted range
 func SetThreshold(t int) error {
-	if t < LevelDebug || t > LevelError {
+	if t < LevelDebug || t > LevelFatal {
 		return ErrInvalidThreshold
 	}
 	logThreshold = t
@@ -68,8 +70,24 @@ func LogThreshold() int {
 
 // Printf will use the logger attached to this LogLevel to write a log message.
 // Message will only get written if current log level allows it (it won't write INFO messages if we're at ERROR)
+// When writing to the Fatal log level the program will automatically exit with status code 1
 func (l *LogLevel) Printf(format string, v ...interface{}) {
 	if l.level >= logThreshold {
 		l.logger.Printf(format, v...)
+	}
+	if l.level == LevelFatal {
+		os.Exit(1)
+	}
+}
+
+// Println will use the logger attached to this LogLevel to write a log message.
+// Message will only get written if current log level allows it (it won't write INFO messages if we're at ERROR)
+// When writing to the Fatal log level the program will automatically exit with status code 1
+func (l *LogLevel) Println(v ...interface{}) {
+	if l.level >= logThreshold {
+		l.logger.Println(v...)
+	}
+	if l.level == LevelFatal {
+		os.Exit(1)
 	}
 }
