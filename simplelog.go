@@ -27,6 +27,7 @@ type LogLevel struct {
 
 // Logger objects that will be used to perform the actual logging.
 // Each of them represents a different logging level and can be pointed to a different backend (file, stdout, etc...)
+// TODO: Allow for a method to change log destination of a logging level (and potentially of all log levels)
 var (
 	Fatal   = &LogLevel{prefix: "FATAL: ", level: LevelFatal, destination: os.Stderr}
 	Error   = &LogLevel{prefix: "ERROR: ", level: LevelError, destination: os.Stderr}
@@ -71,23 +72,27 @@ func LogThreshold() int {
 // Printf will use the logger attached to this LogLevel to write a log message.
 // Message will only get written if current log level allows it (it won't write INFO messages if we're at ERROR)
 // When writing to the Fatal log level the program will automatically exit with status code 1
+// TODO: Prepend the name of the application doing the logging to the msg (if it has been defined)
 func (l *LogLevel) Printf(format string, v ...interface{}) {
+	if l.level == LevelFatal {
+		l.logger.Fatalf(format, v...)
+	}
+
 	if l.level >= logThreshold {
 		l.logger.Printf(format, v...)
-	}
-	if l.level == LevelFatal {
-		os.Exit(1)
 	}
 }
 
 // Println will use the logger attached to this LogLevel to write a log message.
 // Message will only get written if current log level allows it (it won't write INFO messages if we're at ERROR)
 // When writing to the Fatal log level the program will automatically exit with status code 1
+// TODO: Prepend the name of the application doing the logging to the msg (if it has been defined)
 func (l *LogLevel) Println(v ...interface{}) {
+	if l.level == LevelFatal {
+		l.logger.Fatalln(v...)
+	}
+
 	if l.level >= logThreshold {
 		l.logger.Println(v...)
-	}
-	if l.level == LevelFatal {
-		os.Exit(1)
 	}
 }
